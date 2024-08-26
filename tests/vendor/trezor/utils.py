@@ -2,7 +2,7 @@ import os
 import socket
 from fido2.ctap import STATUS
 
-from trezorlib import debuglink
+from trezorlib import debuglink, models
 from trezorlib.debuglink import TrezorClientDebugLink
 from trezorlib.device import wipe as wipe_device
 from trezorlib.transport import enumerate_devices, get_transport
@@ -51,6 +51,10 @@ def load_client():
 
 
 TREZOR_CLIENT = load_client()
+CLICK_CONFIRM = (120, 120)
+CLICK_UPPER = (120, 80)
+CLICK_LOWER = (120, 140)
+CLICK_CORNER = (215, 25)
 
 
 class DeviceSelectCredential:
@@ -61,9 +65,39 @@ class DeviceSelectCredential:
         if status != STATUS.UPNEEDED:
             return
 
-        if self.number == 0:
-            TREZOR_CLIENT.debug.press_no()
+        if TREZOR_CLIENT.debug.model is models.T2T1:
+            if self.number == 0:
+                TREZOR_CLIENT.debug.press_no()
+            else:
+                for _ in range(self.number - 1):
+                    TREZOR_CLIENT.debug.swipe_left()
+                TREZOR_CLIENT.debug.press_yes()
+
+        elif TREZOR_CLIENT.debug.model is models.T3T1:
+            # avoid homescreen
+            TREZOR_CLIENT.debug.synchronize_at("Frame")
+
+            if self.number < 1:
+                # cancel
+                TREZOR_CLIENT.debug.click(CLICK_CORNER)
+                TREZOR_CLIENT.debug.click(CLICK_UPPER)
+                return
+
+            l = TREZOR_CLIENT.debug.read_layout()
+            select_from_multiple = "FidoCredential" not in l.all_components()
+            if select_from_multiple:
+                # info screen
+                TREZOR_CLIENT.debug.swipe_up(wait=True)
+                # 2 credentials per page
+                index = self.number - 1
+                for _ in range(index // 2):
+                    TREZOR_CLIENT.debug.swipe_up(wait=True)
+                TREZOR_CLIENT.debug.click(CLICK_UPPER if index % 2 == 0 else CLICK_LOWER)
+
+            # credential details
+            TREZOR_CLIENT.debug.swipe_up(wait=True)
+            # tap to confirm
+            TREZOR_CLIENT.debug.click(CLICK_CONFIRM)
+
         else:
-            for _ in range(self.number - 1):
-                TREZOR_CLIENT.debug.swipe_left()
-            TREZOR_CLIENT.debug.press_yes()
+            raise NotImplementedError(TREZOR_CLIENT.debug.model.internal_name)
