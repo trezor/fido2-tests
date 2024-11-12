@@ -87,15 +87,15 @@ class DeviceSelectCredential:
             select_from_multiple = "FidoCredential" not in l.all_components()
             if select_from_multiple:
                 # info screen
-                TREZOR_CLIENT.debug.swipe_up(wait=True)
+                TREZOR_CLIENT.debug.swipe_up()
                 # 2 credentials per page
                 index = self.number - 1
                 for _ in range(index // 2):
-                    TREZOR_CLIENT.debug.swipe_up(wait=True)
+                    TREZOR_CLIENT.debug.swipe_up()
                 TREZOR_CLIENT.debug.click(CLICK_UPPER if index % 2 == 0 else CLICK_LOWER)
 
             # credential details
-            TREZOR_CLIENT.debug.swipe_up(wait=True)
+            TREZOR_CLIENT.debug.swipe_up()
             # tap to confirm
             TREZOR_CLIENT.debug.click(CLICK_CONFIRM)
 
