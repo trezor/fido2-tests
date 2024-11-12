@@ -65,6 +65,9 @@ class DeviceSelectCredential:
         if status != STATUS.UPNEEDED:
             return
 
+        # avoid homescreen
+        TREZOR_CLIENT.debug.synchronize_at("Frame")
+
         if TREZOR_CLIENT.debug.layout_type is LayoutType.TT:
             if self.number == 0:
                 TREZOR_CLIENT.debug.press_no()
@@ -74,9 +77,6 @@ class DeviceSelectCredential:
                 TREZOR_CLIENT.debug.press_yes()
 
         elif TREZOR_CLIENT.debug.layout_type is LayoutType.Mercury:
-            # avoid homescreen
-            TREZOR_CLIENT.debug.synchronize_at("Frame")
-
             if self.number < 1:
                 # cancel
                 TREZOR_CLIENT.debug.click(CLICK_CORNER)
