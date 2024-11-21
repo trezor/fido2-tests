@@ -35,18 +35,17 @@ def load_client():
         request.session.shouldstop = "No debuggable Trezor is available"
         pytest.fail("No debuggable Trezor is available")
 
-    wipe_device(client)
+    wipe_device(client.get_seedless_session())
+    new_client = client.get_new_client()
+    session = new_client.get_seedless_session()
     debuglink.load_device_by_mnemonic(
-        client,
+        session,
         mnemonic=" ".join(["all"] * 12),
         pin=None,
         passphrase_protection=False,
         label="test",
     )
-    client.clear_session()
-
-    client.open()
-    return client
+    return new_client
 
 
 TREZOR_CLIENT = load_client()
