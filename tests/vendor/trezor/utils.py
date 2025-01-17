@@ -75,7 +75,7 @@ class DeviceSelectCredential:
                     TREZOR_CLIENT.debug.swipe_left()
                 TREZOR_CLIENT.debug.press_yes()
 
-        elif TREZOR_CLIENT.debug.layout_type is LayoutType.Quicksilver:
+        elif TREZOR_CLIENT.debug.layout_type is LayoutType.Delizia:
             if self.number < 1:
                 # cancel
                 TREZOR_CLIENT.debug.click(CLICK_CORNER)
