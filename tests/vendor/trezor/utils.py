@@ -65,7 +65,10 @@ class DeviceSelectCredential:
             return
 
         # avoid homescreen
-        TREZOR_CLIENT.debug.synchronize_at("Frame")
+        if TREZOR_CLIENT.debug.layout_type is LayoutType.Eckhart:
+            TREZOR_CLIENT.debug.synchronize_at("TextScreen")
+        else:
+            TREZOR_CLIENT.debug.synchronize_at("Frame")
 
         if TREZOR_CLIENT.debug.layout_type is LayoutType.Bolt:
             if self.number == 0:
@@ -99,6 +102,33 @@ class DeviceSelectCredential:
             TREZOR_CLIENT.debug.swipe_up()
             # tap to confirm
             TREZOR_CLIENT.debug.click(CLICK_CONFIRM)
+
+        elif TREZOR_CLIENT.debug.layout_type is LayoutType.Eckhart:
+            layout = TREZOR_CLIENT.debug.read_layout()
+            screen_content = layout.screen_content().strip().lower()
+            # decline authentication
+            if self.number < 1:
+                TREZOR_CLIENT.debug.press_no()
+            # 1 credential per page
+            elif "FidoCredential" in layout.all_components():
+                TREZOR_CLIENT.debug.press_yes()
+            # remove all credentials
+            elif any(word in screen_content for word in ("delete", "erase")):
+                TREZOR_CLIENT.debug.press_yes()
+            # multiple credentials choice
+            else:
+                # info screen
+                TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
+                # credential menu
+                # in the test setup (with animations disabled) the vertical swipe scrolls the menu by one item
+                # the n-the credential is selected by swiping up (n-1) times and clicking on the first item
+                for _ in range(self.number - 1):
+                    TREZOR_CLIENT.debug.swipe_up()
+                TREZOR_CLIENT.debug.click(
+                    TREZOR_CLIENT.debug.screen_buttons.vertical_menu_items()[0]
+                )
+                # credential details
+                TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
 
         else:
             raise NotImplementedError(TREZOR_CLIENT.debug.layout_type)
