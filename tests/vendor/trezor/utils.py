@@ -89,13 +89,9 @@ class DeviceSelectCredential:
             if select_from_multiple:
                 # info screen
                 TREZOR_CLIENT.debug.swipe_up()
-                # 2 credentials per page
+                # credential menu
                 index = self.number - 1
-                for _ in range(index // 2):
-                    TREZOR_CLIENT.debug.swipe_up()
-                TREZOR_CLIENT.debug.click(
-                    CLICK_UPPER if index % 2 == 0 else CLICK_LOWER
-                )
+                TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
 
             # credential details
             TREZOR_CLIENT.debug.swipe_up()
@@ -119,13 +115,8 @@ class DeviceSelectCredential:
                 # info screen
                 TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
                 # credential menu
-                # in the test setup (with animations disabled) the vertical swipe scrolls the menu by one item
-                # the n-the credential is selected by swiping up (n-1) times and clicking on the first item
-                for _ in range(self.number - 1):
-                    TREZOR_CLIENT.debug.swipe_up()
-                TREZOR_CLIENT.debug.click(
-                    TREZOR_CLIENT.debug.screen_buttons.vertical_menu_items()[0]
-                )
+                index = self.number - 1
+                TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
                 # credential details
                 TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
 
