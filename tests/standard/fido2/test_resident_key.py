@@ -99,14 +99,22 @@ class TestResidentKey(object):
     @pytest.mark.skipif('trezor' not in sys.argv, reason="Only Trezor has a display.")
     def test_multiple_rk_display(self, device, MC_RK_Res):
         regs = [MC_RK_Res]
+        account_names = [MC_RK_Res.request.user["name"]]
         for i in range(0, 3):
-            req = FidoRequest(MC_RK_Res, user=generate_user())
+            user = generate_user()
+            account_names.append(user["name"])
+            req = FidoRequest(MC_RK_Res, user=user)
             res = device.sendMC(*req.toMC())
             setattr(res, "request", req)
             regs.append(res)
+        account_names.reverse()
 
         for i, reg in enumerate(reversed(regs)):
-            req = FidoRequest(MC_RK_Res, options=None, on_keepalive=DeviceSelectCredential(i + 1))
+            req = FidoRequest(
+                MC_RK_Res,
+                options=None,
+                on_keepalive=DeviceSelectCredential(i + 1, account_names),
+            )
             res = device.sendGA(*req.toGA())
             assert res.number_of_credentials is None
 
