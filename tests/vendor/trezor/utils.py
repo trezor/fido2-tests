@@ -56,8 +56,9 @@ CLICK_CORNER = (215, 25)
 
 
 class DeviceSelectCredential:
-    def __init__(self, number=1):
+    def __init__(self, number=1, account_names: list | None = None):
         self.number = number
+        self.account_names = account_names
 
     def __call__(self, status):
         if status != STATUS.UPNEEDED:
@@ -75,6 +76,12 @@ class DeviceSelectCredential:
             else:
                 for _ in range(self.number - 1):
                     TREZOR_CLIENT.debug.swipe_left()
+                if self.account_names is not None:
+                    current_account_name = (
+                        TREZOR_CLIENT.debug.read_layout().bolt_fido_confirm_account()
+                    )
+                    expected = self.account_names[self.number - 1]
+                    assert current_account_name == expected
                 TREZOR_CLIENT.debug.press_yes()
 
         elif TREZOR_CLIENT.debug.layout_type is LayoutType.Delizia:
@@ -91,7 +98,12 @@ class DeviceSelectCredential:
                 TREZOR_CLIENT.debug.swipe_up()
                 # credential menu
                 index = self.number - 1
-                TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                if self.account_names is not None:
+                    selected_account_name = (
+                        TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                    )
+                    expected = self.account_names[index]
+                    assert selected_account_name == expected
 
             # credential details
             TREZOR_CLIENT.debug.swipe_up()
@@ -116,7 +128,12 @@ class DeviceSelectCredential:
                 TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
                 # credential menu
                 index = self.number - 1
-                TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                if self.account_names is not None:
+                    selected_account_name = (
+                        TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                    )
+                    expected = self.account_names[index]
+                    assert selected_account_name == expected
                 # credential details
                 TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
 
