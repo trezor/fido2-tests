@@ -2,7 +2,7 @@ import os
 from fido2.ctap import STATUS
 
 from trezorlib import debuglink
-from trezorlib.debuglink import TrezorClientDebugLink, LayoutType
+from trezorlib.debuglink import TrezorTestContext, LayoutType
 from trezorlib.device import wipe as wipe_device
 from trezorlib.transport import enumerate_devices, get_transport
 
@@ -13,7 +13,7 @@ def get_device():
     if path:
         try:
             transport = get_transport(path)
-            return TrezorClientDebugLink(transport, auto_interact=not interact)
+            return TrezorTestContext(transport, auto_interact=not interact)
         except Exception as e:
             raise RuntimeError("Failed to open debuglink for {}".format(path)) from e
 
@@ -21,7 +21,7 @@ def get_device():
         devices = enumerate_devices()
         for device in devices:
             try:
-                return TrezorClientDebugLink(device, auto_interact=not interact)
+                return TrezorTestContext(device, auto_interact=not interact)
             except Exception:
                 pass
         else:
@@ -36,8 +36,8 @@ def load_client():
         pytest.fail("No debuggable Trezor is available")
 
     wipe_device(client.get_seedless_session())
-    new_client = client.get_new_client()
-    session = new_client.get_seedless_session()
+    client.reset_instance()
+    session = client.get_seedless_session()
     debuglink.load_device_by_mnemonic(
         session,
         mnemonic=" ".join(["all"] * 12),
@@ -45,7 +45,7 @@ def load_client():
         passphrase_protection=False,
         label="test",
     )
-    return new_client
+    return client
 
 
 TREZOR_CLIENT = load_client()
