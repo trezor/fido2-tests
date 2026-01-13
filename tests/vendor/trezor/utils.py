@@ -98,10 +98,10 @@ class DeviceSelectCredential:
                 TREZOR_CLIENT.debug.swipe_up()
                 # credential menu
                 index = self.number - 1
+                selected_account_name = (
+                    TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                )
                 if self.account_names is not None:
-                    selected_account_name = (
-                        TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
-                    )
                     expected = self.account_names[index]
                     assert selected_account_name == expected
 
@@ -128,10 +128,10 @@ class DeviceSelectCredential:
                 TREZOR_CLIENT.debug.click(TREZOR_CLIENT.debug.screen_buttons.ok())
                 # credential menu
                 index = self.number - 1
+                selected_account_name = (
+                    TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
+                )
                 if self.account_names is not None:
-                    selected_account_name = (
-                        TREZOR_CLIENT.debug.button_actions.navigate_to_menu_item(index)
-                    )
                     expected = self.account_names[index]
                     assert selected_account_name == expected
                 # credential details
