@@ -15,8 +15,10 @@ from tests.utils import *
 
 if 'trezor' in sys.argv:
     from .vendor.trezor.udp_backend import force_udp_backend
+    TREZOR = True
 else:
     from solo.fido2 import force_udp_backend
+    TREZOR = False
 
 
 def pytest_addoption(parser):
@@ -24,7 +26,75 @@ def pytest_addoption(parser):
     parser.addoption("--nfc", action="store_true")
     parser.addoption("--experimental", action="store_true")
     parser.addoption("--vendor", default="none")
+    # Trezor-specific options:
+    if TREZOR:
+        parser.addoption(
+            "--ui",
+            action="store",
+            choices=["test", "record"],
+            help="Enable UI integration tests: 'record' or 'test'",
+        )
+        parser.addoption(
+            "--ui-check-missing",
+            action="store_true",
+            default=False,
+            help="Check UI fixtures are containing the appropriate test cases (fails on `test`,"
+            "deletes old ones on `record`).",
+        )
+        parser.addoption(
+            "--do-master-diff",
+            action="store_true",
+            default=False,
+            help="Generating a master-diff report. "
+            "This shows all unique differing screens compared to master.",
+        )
 
+if TREZOR:
+    from _pytest.config import Config
+    from _pytest.terminal import TerminalReporter
+
+    # FIXME: cannot do relative import beyond top-level package.
+    # As a workaroudn, we adjust PYTHONPATH when running the tests.
+    import ui_tests
+
+    def pytest_sessionstart(session: pytest.Session) -> None:
+        if session.config.getoption("ui"):
+            ui_tests.setup(main_runner=True)
+
+
+    def pytest_sessionfinish(session: pytest.Session, exitstatus: pytest.ExitCode) -> None:
+        if session.config.getoption("ui"):
+            test_ui = session.config.getoption("ui")
+            session.exitstatus = ui_tests.sessionfinish(
+                exitstatus,
+                test_ui,
+                bool(session.config.getoption("ui_check_missing")),
+                bool(session.config.getoption("do_master_diff")),
+            )
+
+    def pytest_terminal_summary(
+        terminalreporter: "TerminalReporter", exitstatus: pytest.ExitCode, config: "Config"
+    ) -> None:
+        println = terminalreporter.write_line
+        println("")
+
+        ui_option = config.getoption("ui")
+        if ui_option:
+            import ui_tests
+
+            ui_tests.terminal_summary(
+                terminalreporter.write_line,
+                ui_option,  # type: ignore
+                bool(config.getoption("ui_check_missing")),
+                exitstatus,
+            )
+
+    @pytest.fixture(scope="function", autouse=True)
+    def screen_recording(request: pytest.FixtureRequest):
+        from .vendor.trezor.utils import TREZOR_CLIENT
+
+        with ui_tests.screen_recording(TREZOR_CLIENT, request):
+            yield
 
 @pytest.fixture()
 def is_simulation(pytestconfig):
