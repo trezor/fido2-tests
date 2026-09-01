@@ -156,6 +156,7 @@ class TestGetAssertion(object):
 
         if '--nfc' not in sys.argv:
             assert((res.auth_data.flags & 1) == 0)
+            assert res.auth_data.counter == 0  # bogus counter is returned
 
 
 @pytest.mark.skipif('trezor' in sys.argv, reason="Reboot is not supported on Trezor.")
